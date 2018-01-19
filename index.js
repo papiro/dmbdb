@@ -9,7 +9,15 @@ const fs = require('fs'), path = require('path'), _ = require('_private')
 class Table {
   constructor (name, schema = {}) {
     const file = path.join(process.env.DMBDB_PATH, name)
-    const openTable = () => { _(this) = new Proxy(require(file), schema); done() }
+
+    function openTable () { 
+      _(this).data = new Proxy(require(file), schema)
+      _(this).lastId = Object.keys(_(this).data).length
+      done()
+    }
+
+    // initialize the lock with a resolved Promise
+    _(this).lock = (new Promise()).resolve()
     this.lock( done => {
       fs.access(file, fs.constants.W_OK, (err1) => {
         if (err1) {
@@ -25,7 +33,7 @@ class Table {
       })
     })
   }
-  // recursive write queue
+  // write stack
   lock (access) {
     _(this).lock = new Promise( (resolve, reject) => {
       _(this).lock.then( () => {
@@ -35,5 +43,4 @@ class Table {
   }
   write (row = []) {
   }
-
 }
